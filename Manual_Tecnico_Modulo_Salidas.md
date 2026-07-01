@@ -29,7 +29,9 @@ graph TD
 
     %% Pestaña 2: Historial de Salidas
     D -->|Tab: HISTORIAL SALIDAS| F[HistorialSalidas.jsx - Grilla y Auditoría]
-    F -->|Filtrado y Paginación| GET_HIST[GET_REGISTRO_SALIDAS]
+    F -->|Filtrado Multidimensional y Fechas| GET_HIST[GET_REGISTRO_SALIDAS]
+    F -->|Hover Interactiva Scrollable| POP_BIENES[BienesTableCell - Popover en Portal]
+    F -->|Resaltado Coincidencias| H_TEXT[HighlightText - Marcatextos Continuo]
     F -->|Acción: Regenerar PDF| REG_PDF[Re-renderizado pdf-lib en el Navegador]
     F -->|Acción: Editar Salida| ED_MODAL[Modal Edición con SalidasForm embebido]
     ED_MODAL -->|Mutación| MUT_ACT[ACTUALIZAR_SALIDA]
@@ -44,8 +46,13 @@ graph TD
    - *Etapa 1 (`formulario`):* Captura de metadatos institucionales (solicitante, matrícula, adscripción, empresa, identificación, motivo, origen, responsable, compromisos de devolución) y armado del carrito de bienes.
    - *Etapa 2 (`preview`):* Consulta el próximo folio a emitir (`GET_FOLIO_SALIDAS`) y renderiza en un `iframe` o visor nativo del navegador un archivo PDF oficial rellenado y sellado temporalmente en memoria del cliente.
    - *Etapa 3 (`confirmado`):* Tras la aprobación del usuario, ejecuta la mutación que consolida el folio atómicamente en el backend, habilita la impresión mediante combinaciones de teclas (`Ctrl+P` / `Cmd+P`) y bloquea la edición para evitar duplicidades transaccionales.
-3. **`HistorialSalidas.jsx` (Grilla de Auditoría y Control):**
-   Proporciona una vista de tabla virtualizada y paginada del histórico de pases de salida emitidos. Incorpora una barra de filtrado multidimensional con búsqueda combinada (`search` con debounce de 400 ms) por folio, solicitante o motivo, y filtrado por rangos cronológicos precisos (`fecha_inicio` a `fecha_fin`). Permite a los administradores inspeccionar los detalles de los equipos amparados bajo un pase, disparar la re-generación instantánea del PDF oficial sin peticiones adicionales al servidor, y abrir una modal de edición transaccional.
+3. **`HistorialSalidas.jsx` (Grilla de Auditoría, Inspección Interactiva y Control):**
+   Proporciona una vista de tabla paginada del histórico de pases de salida emitidos con funcionalidades avanzadas de inspección y búsqueda:
+   - **Búsqueda Multidimensional y Resaltado Visual (`HighlightText`):** Incorpora una barra de filtrado combinada (`search` con debounce de 400 ms) que busca coincidencias en folios, solicitantes, motivos, responsables, así como dentro de las descripciones, números de serie, números de inventario (`num_inv`) o cantidades de los bienes amparados. El componente helper `HighlightText` aplica un efecto de marcatextos amarillo brillante continuado sobre las coincidencias exactas en toda la pantalla sin alterar el flujo ni separar los caracteres de las palabras.
+   - **Columna Enriquecida de Bienes (`BienesTableCell`):** En lugar de ocultar los datos de los activos, muestra en la celda un resumen visual con una insignia del conteo total (`<Package /> X bienes`) y viñetas con las dos primeras descripciones e identificadores directos del pase.
+   - **Tablita Flotante Interactiva con Scroll en Hover:** Al posicionar el cursor sobre la celda o el botón de "+X más", se despliega en un portal flotante del DOM una mini-tabla interactiva (`pointer-events-auto`) con scroll interno. Cuenta con un sistema de temporizadores de gracia (`hoverTimer` y `closeTimer` de 250ms/350ms) que permite al usuario desplazar el mouse hacia dentro de la ventana emergente y hacer scroll tranquilamente sobre decenas de bienes sin que la tabla desaparezca o parpadee.
+   - **Modal de Inspección Detallada:** Un clic sobre la celda abre un modal dedicado con la tabla completa de activos de esa salida, incorporando su propio buscador instantáneo con resaltado en tiempo real.
+   - **Alineación Cronológica Estricta:** Implementa sincronización exacta de parámetros de fecha (`fecha_desde` y `fecha_hasta`) con las especificaciones del esquema GraphQL en el servidor.
 4. **Herramientas de Captura Ágil (`SearchableSelect` & Importadores Excel):**
    El formulario incluye selectores auto-completados que consultan catálogos dinámicos (`useCatalogosBienes`). Para salidas masivas (ej. traslados de laboratorios completos), incorpora un importador y analizador sintáctico de archivos `.xlsx` (`handleImportExcel`) que extrae listas de números de serie, consulta su existencia en el inventario de la base de datos de forma paralela via `GET_BIEN_BY_SERIE_QUERY`, e inyecta los registros tipificados al listado de la salida. Además, incluye inteligencia topológica para acoplar opcionalmente los monitores vinculados a las CPU seleccionadas (`incluirMonitores`).
 

@@ -34,7 +34,7 @@ graph TD
     F --> M_Conf[ConfirmModal - Eliminación de Bienes / Sincronización Masiva]
     F --> M_Det[DetalleBienVisualModal - Ficha Visual Rápida]
     F --> M_Rep[ReportePanel - Cubos Analíticos Multidimensionales]
-    F --> M_Exc[ExportExcelModal - Extracción Matricial 34 Columnas]
+    F --> M_Exc[ExportExcelModal - Extracción Matricial 35 Columnas]
     F --> M_Mas[CargaMasivaPanel - Importación y Validación Excel]
     F --> M_Lbl[PrintLabelsTab / PrintStickerSheet - Emisión QR & Barras]
 
@@ -154,12 +154,12 @@ El módulo incorpora un motor de búsqueda multi-criterio en tiempo real que act
 * **Extracción Matricial y Paginada a Excel (`ExportExcelModal.jsx`):**
   Cuando el usuario solicita exportar a hoja de cálculo, el sistema no descarga la página HTML visible. El componente invoca la función asíncrona `fetchAllBienes(serverFilter)`, la cual realiza peticiones GraphQL iterativas consumiendo cursores de paginación (`endCursor`) hasta extraer la totalidad de miles de registros filtrados en la memoria del navegador.
   
-  Transforma los nodos relacionales en una matriz estructurada de **34 columnas** exportadas utilizando la librería `xlsx`, agrupadas jerárquicamente bajo una fila de super-cabeceras visuales:
-  1. *Principales:* N°, Tipo de Dispositivo, Marca, Descripción del Dispositivo, N° de Serie, N° de Inventario, Unidad Médica/Administrativa, Ubicación Física Interior, Estatus Operativo.
-  2. *Otros Datos Generales:* Clave Presupuestal, Categoría Patrimonial, Clave de Modelo, Unidad de Medida, Segmento de Red, Usuario Resguardo, Fecha de Adquisición, Bandera Capitalizable, Cantidad.
-  3. *Especificaciones TI:* Procesador (CPU), Memoria RAM (GB), Almacenamiento (GB), Dirección IP, Dirección MAC, MAC Address formateada, Nombre Host (Hostname), Sistema Operativo, Versión de Office, Puerto de Red, Switch Conectado, N° Serie Windows, Fecha de Último Escaneo WMI.
-  4. *Auditoría de Acceso:* Cuentas Registradas (concatenación formateada de todas las cuentas Windows, correos institucionales y tipos de usuario que acceden a la PC).
-  5. *Cobertura de Garantía:* Estado de Garantía, Fecha en que Vence la Garantía, Empresa Proveedora del Soporte.
+  Transforma los nodos relacionales en una matriz estructurada de **35 columnas** exportadas utilizando la librería `xlsx`, agrupadas jerárquicamente bajo una fila de super-cabeceras visuales por secciones temáticas:
+  1. *DATOS PRINCIPALES (1..9):* No., TIPO DE DISPOSITIVO, MARCA, MODELO, SERIE, NNI (N° de Inventario), UNIDAD, UBICACIÓN, ESTATUS (con formato condicional de celda según el estado operativo), DESCRIPCIÓN DISPOSITIVO.
+  2. *DATOS GENERALES (10..12):* CLAVE PRESUPUESTAL, SEGMENTO, RESGUARDO.
+  3. *ESPECIFICACIONES TI (13..26):* CPU, RAM, ALMACENAMIENTO, DIR IP, DIR MAC, MAC ADDRESS, NOMBRE HOST, S.O., OFFICE, PUERTO RED, SWITCH, NO. SERIE WINDOWS, CUENTAS REGISTRADAS (Usuario | Correo | Tipo), ULTIMO ESCANEO.
+  4. *GARANTÍA (27..29):* GARANTIA, GARANTIA VENCE, PROVEEDOR GARANTIA.
+  5. *DATOS ADMINISTRATIVOS (30..34):* FECHA ADQUISICIÓN, CATEGORIA, UNIDAD DE MEDIDA, CAPITALIZABLE, CANTIDAD.
 
 ---
 
