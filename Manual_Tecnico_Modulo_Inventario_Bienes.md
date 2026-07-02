@@ -88,7 +88,7 @@ graph TD
 
 * **Gestión de Permisos y Vistas por Rol de Usuario (`id_rol`):**
   La interfaz muta arquitectónicamente en tiempo de ejecución evaluando el rol del usuario autenticado (`useAuthStore`):
-  - **Usuario Estándar (`id_rol === 3`):** Carece de privilegios para alterar el activo fijo patrimonial. El componente filtra la pestaña "General" de su navegación y bloquea los campos de identificación (`<fieldset disabled>`). El usuario estándar ingresa directamente a la pestaña *"Técnico / Garantía"*, donde se le permite gestionar únicamente aspectos operativos: actualizar ubicación física interior, agregar notas de observación para reportar fallas e imprimir acuses o historial de préstamos.
+  - **Usuario Estándar (`id_rol === 3`):** Carece de privilegios para alterar el activo fijo patrimonial. El componente filtra la pestaña "General" de su navegación y bloquea los campos de identificación (`<fieldset disabled>`). El usuario estándar ingresa directamente a la pestaña *"Técnico / Garantía"*, donde se le permite gestionar únicamente aspectos operativos: modificar o asignar el usuario de resguardo (`id_usuario_resguardo`), actualizar ubicación física interior, agregar notas de observación para reportar fallas e imprimir acuses o historial de préstamos.
   - **Administrador Zonal (`id_rol === 2`) y Maestro (`id_rol === 1`):** Poseen control total sobre todas las pestañas (*"General"*, *"Técnico / Garantía"*, *"Historial / Bitácora"*). Pueden modificar números de serie, números de inventario, claves presupuestales, reasignar resguardos patrimoniales, asignar monitores periféricos y disparar órdenes remotas de barrido de red.
 
 * **Pestañas y Secciones Funcionales Internas:**
@@ -115,7 +115,7 @@ El subsistema de etiquetado está diseñado para interoperar con plantillas come
 * **Control Operativo de Desperdicio (Desplazamiento Inicial - `startOffset`):**
   Para evitar el desperdicio de planillas adhesivas parcialmente utilizadas en impresiones anteriores, el sistema incorpora un deslizador numérico de configuración (`startOffset`). Este parámetro inyecta celdas vacías nulas (`Array(startOffset).fill(null)`) al inicio del arreglo visual, desplazando la primera etiqueta impresa exactamente hasta la posición física desprendible que aún se encuentra intacta en la hoja del usuario.
 * **Reordenamiento Táctil (*Drag & Drop*):**
-  Los elementos en la cola de impresión pueden ser reordenados interactivamente arrastrando y soltando (`handleDragStart`), permitiendo agrupar etiquetas por área o jefatura antes de emitir el documento impreso. Renderiza códigos QR vectoriales de alta densidad (`QRCodeSVG`) con el hash criptográfico del bien e incrusta el número de serie en tipografía monoespaciada legible por humanos.
+  Los elementos en la cola de impresión pueden ser reordenados interactivamente arrastrando y soltando (`handleDragStart`), permitiendo agrupar etiquetas por área o jefatura antes de emitir el documento impreso. Renderiza códigos QR vectoriales de alta densidad (`QRCodeSVG`) con el hash criptográfico del bien e incrusta la ubicación física interior, número de serie y número de inventario en tipografía legible por humanos. Además, incorpora lógica condicional de adscripción institucional: si el activo no pertenece a la unidad de la delegación (clave de unidad diferente a `'199001'`), la etiqueta imprime en su encabezado superior el nombre o descripción de la unidad médica o administrativa correspondiente, facilitando su identificación exterior.
 
 ---
 
