@@ -36,10 +36,11 @@ graph TD
     F -->|Acción: Editar Salida| ED_MODAL[Modal Edición con SalidasForm embebido]
     ED_MODAL -->|Mutación| MUT_ACT[ACTUALIZAR_SALIDA]
 
-    %% Pestaña 3: Salidas Antiguas
+    %% Pestaña 3: Salidas Antiguas (Consulta)
     D -->|Tab: SALIDAS ANTIGUAS| G[HistorialSalidasAntiguas.jsx - Consulta Histórica]
-    G -->|Consulta Acervo Previo| GET_ANT[GET_SALIDAS_ANTIGUAS]
-    G -->|Inspección Artículos| MOD_ART[Modal Detalle Artículos Salida]
+    G -->|Búsqueda y Filtros Cronológicos| GET_ANT[GET_SALIDAS_ANTIGUAS]
+    G -->|Paginación Suave Sin Parpadeos| KEEP_DATA[placeholderData: keepPreviousData]
+    G -->|Inspección Detallada por Clic| MODAL_ANT[Modal Completo con Artículos y Responsables]
 
     %% Orquestación de Cabecera y Exportación Excel
     A -->|Refrescar / Exportar a Excel via useRef + forwardRef| F
@@ -51,7 +52,7 @@ graph TD
 ### Componentes Principales
 
 1. **`Movimientos.jsx` (Contenedor Principal Orquestador con Cabecera Dinámica):**
-   Constituye el punto de entrada de la ruta `/movimientos`. Evalúa de manera reactiva la identidad del operador consultando `useAuthStore`. Si el usuario posee un rol estrictamente restringido (o se aplican políticas de solo lectura), renderiza un panel informativo de bloqueo institucional. En condiciones operativas normales, administra un enrutador de pestañas de **Radix UI** (`<Tabs.Root>`) que alterna de forma fluida entre tres vistas: el motor de creación (`SalidasForm`), la bitácora histórica (`HistorialSalidas`) y la consulta del acervo antiguo (`HistorialSalidasAntiguas`).
+   Constituye el punto de entrada de la ruta `/movimientos`. Evalúa de manera reactiva la identidad del operador consultando `useAuthStore`. Si el usuario posee un rol estrictamente restringido (o se aplican políticas de solo lectura), renderiza un panel informativo de bloqueo institucional. En condiciones operativas normales, administra un enrutador de pestañas de **Radix UI** (`<Tabs.Root>`) que alterna de forma fluida entre tres módulos operativos: el motor de creación (`SalidasForm`), la bitácora activa (`HistorialSalidas`) y el repositorio de consulta histórica (`HistorialSalidasAntiguas`).
    - **Orquestación Reactiva de Botones de Cabecera:** Al navegar hacia las pestañas de consulta (`historial` o `historial_antiguo`), el contenedor renderiza dinámicamente en el extremo superior derecho de la cabecera los botones operativos de **Refrescar** (`RefreshCw`) y **Exportar a Excel** (`FileSpreadsheet`), manteniendo una coherencia visual estricta con el resto del sistema (botones con gradiente verde corporativo `#107c41`). Estos botones se vinculan de manera desacoplada y atómica a los métodos `refetch` y `handleExportExcel` expuestos por las sub-vistas mediante referencias (`useRef` y `forwardRef`).
 2. **`SalidasForm.jsx` (Motor Transaccional de Creación y Edición):**
    Es el componente más complejo del módulo. Opera de manera dual: como formulario de alta de nuevas salidas (`isEditMode = false`) y como sub-vista de modificación en caliente (`isEditMode = true`). Integra un sistema de tres etapas secuenciales:
@@ -65,8 +66,10 @@ graph TD
    - **Tablita Flotante Interactiva con Scroll en Hover:** Al posicionar el cursor sobre la celda o el botón de "+X más", se despliega en un portal flotante del DOM una mini-tabla interactiva (`pointer-events-auto`) con scroll interno. Cuenta con un sistema de temporizadores de gracia (`hoverTimer` y `closeTimer` de 250ms/350ms) que permite al usuario desplazar el mouse hacia dentro de la ventana emergente y hacer scroll tranquilamente sobre decenas de bienes sin que la tabla desaparezca o parpadee.
    - **Modal de Inspección Detallada:** Un clic sobre la celda abre un modal dedicado con la tabla completa de activos de esa salida, incorporando su propio buscador instantáneo con resaltado en tiempo real.
    - **Alineación Cronológica Estricta:** Implementa sincronización exacta de parámetros de fecha (`fecha_desde` y `fecha_hasta`) con las especificaciones del esquema GraphQL en el servidor.
-4. **`HistorialSalidasAntiguas.jsx` (Consulta del Acervo Histórico Previo):**
-   Sub-módulo especializado que expone la consulta paginada del histórico de pases de salida heredados o emitidos antes de la modernización arquitectónica (`GET_SALIDAS_ANTIGUAS`). Envuelto de manera homóloga en `forwardRef`, permite búsquedas por ID, solicitante, responsable o descripción, ofreciendo modales de inspección para los artículos asociados.
+4. **`HistorialSalidasAntiguas.jsx` (Repositorio y Grilla de Consulta Histórica de Salidas Antiguas):**
+   Sub-módulo de consulta dedicado a preservar y presentar la trazabilidad de los registros de pases heredados o emitidos con anterioridad a la modernización arquitectónica (`GET_SALIDAS_ANTIGUAS`). Envuelto en `forwardRef` para exponer sus acciones de recarga y exportación hacia la cabecera general, opera bajo estrictas políticas de solo lectura e incorpora:
+   - **Interactividad Total en Fila (`cursor-pointer`):** Cualquier clic sobre la celda o el renglón despliega automáticamente un modal exhaustivo con todos los metadatos históricos registrados (`Solicitante`, `Responsable`, matrículas/puestos asociados `p_solicitante`, `m_solicitante`, `p_responsable`, `m_responsable`, compromiso de `Devolución`, `Fecha de devolución` y `Área`), acompañado de la tabla paginable y filtrable de artículos vinculados.
+   - **Estabilidad de Paginación Anti-Saturación (`keepPreviousData`):** Utiliza la propiedad `placeholderData: keepPreviousData` de TanStack Query v5 para retener en pantalla los datos de la página anterior y el conteo maestro de páginas mientras se efectúa la transición a una nueva página. Además, incorpora un bloqueo de gracia en los controles de navegación (`disabled={isLoading || isFetching}`) durante peticiones en curso, eliminando condiciones de carrera (race conditions) o pantallas vacías al hacer clic velozmente.
 5. **Herramientas de Captura Ágil (`SearchableSelect` & Importadores Excel):**
    El formulario incluye selectores auto-completados que consultan catálogos dinámicos (`useCatalogosBienes`). Para salidas masivas (ej. traslados de laboratorios completos), incorpora un importador y analizador sintáctico de archivos `.xlsx` (`handleImportExcel`) que extrae listas de números de serie, consulta su existencia en el inventario de la base de datos de forma paralela via `GET_BIEN_BY_SERIE_QUERY`, e inyecta los registros tipificados al listado de la salida. Además, incluye inteligencia topológica para acoplar opcionalmente los monitores vinculados a las CPU seleccionadas (`incluirMonitores`).
 
@@ -113,6 +116,7 @@ La capa de red se estructura de forma declarativa en `src/api/salidas.queries.js
   - `GET_USUARIO_POR_MATRICULA($matricula: String!)`: Resuelve la identidad, nombre y adscripción física de un trabajador IMSS.
   - `GET_REGISTRO_SALIDAS($filter, $pagination)`: Recupera la colección histórica de salidas con paginación basada en cursores/offsets, incluyendo la información anidada del usuario registrador y el detalle de cada bien amparado.
   - `GET_REGISTRO_SALIDA($id_salida: Int!)`: Consulta unitaria profunda para hidratar el inspector de detalles o el motor de edición.
+  - `GET_SALIDAS_ANTIGUAS($filter: SalidaAntiguaFilterInput, $pagination: PaginationInput)`: Consulta del repositorio histórico de salidas antiguas con búsqueda multi-columna, filtrado por rango de fechas y paginación optimizada.
 - **Mutaciones (Mutations):**
   - `REGISTRAR_SALIDA($input: RegistroSalidaInput!)`: Persiste la cabecera transaccional y la matriz de bienes en un solo bloque, consumiendo o autogenerando el folio oficial.
   - `ACTUALIZAR_SALIDA($id_salida: Int!, $input: RegistroSalidaInput!)`: Sobreescribe los metadatos de un pase existente y reemplaza transaccionalmente sus ítems asociados.
@@ -127,13 +131,15 @@ El servidor se ejecuta sobre un entorno **Node.js / Express** con tipado estáti
 
 ### Resolvers
 
-Implementados en `src/graphql/resolvers/salidas.resolver.ts`, gestionan la lógica de control, numeración y consultas territoriales:
+Implementados en `src/graphql/resolvers/salidas.resolver.ts` y `src/graphql/resolvers/salidasAntiguas.resolver.ts`, gestionan la lógica de control, numeración, auditoría y consultas territoriales:
 
 - **Query Resolvers:**
   - `folioSalidas`: Consulta la función de agregación máxima sobre la tabla de folios (`SELECT ISNULL(MAX(TRY_CAST(Folio AS INT)), 0)`) para proyectar de forma segura el folio actual y el entero inmediato siguiente sin generar bloqueos en lecturas preliminares.
   - `usuarioPorMatricula`: Consulta el repositorio de `Usuario` mediante coincidencia exacta de matrícula cargando la relación de `unidadFisica`.
   - `registroSalidas`: Orquesta un `QueryBuilder` dinámico sobre `Registro_Salidas`. Implementa el motor de seguridad por multitenancy territorial: si el usuario es de nivel territorial estándar (`isEstandar(context)`), inyecta una subconsulta (`EXISTS` / `IN`) contra las tablas de `Registro_Salida_Bienes`, `Bienes` y `unidades` para garantizar que solo se retornen salidas donde al menos un bien pertenezca a la jurisdicción territorial del usuario (`clave_zona`), excepciones explícitas de serie (`'U003'`, `'T003'`), o donde el pase haya sido registrado directamente por el operador o por un miembro de su misma zona.
   - `registroSalida`: Retorna el registro transaccional unitario y todo su árbol de relaciones patrimoniales.
+  - `salidasAntiguas`: Resolver dedicado para la consulta paginada del archivo patrimonial (`SalidaBienAntiguo`). Ejecuta un `QueryBuilder` con `leftJoinAndSelect` hacia la tabla de artículos asociados, aplicando búsqueda con agrupaciones lógicas de `Brackets` en SQL Server sobre ID, solicitante, responsable, adscripción, procedencia y descripciones de los artículos amparados.
+  - `salidaAntigua`: Consulta individual por ID para obtener el detalle íntegro y la colección de ítems de una salida antigua específica.
 - **Mutation Resolvers:**
   - `registrarSalida`: Implementa un patrón transaccional ACID con nivel de aislamiento estricto (`SERIALIZABLE`) y bloqueos pesados a nivel de motor de base de datos para garantizar la unicidad e inmutabilidad del foliado institucional en ambientes de alta concurrencia.
   - `actualizarSalida`: Abre una transacción para modificar los metadatos de la cabecera y realizar una sustitución atómica de los detalles patrimoniales (`DELETE FROM Registro_Salida_Bienes` seguido de la inserción de los nuevos ítems).
@@ -149,7 +155,11 @@ Las operaciones de salida operan sobre un modelo relacional normalizado y altame
    Entidad de detalle 1:N que vincula un pase de salida con los activos patrimoniales transportados. Almacena la llave primaria (`id_salida_bien`), la llave foránea padre (`id_salida` con cascada en eliminación), el identificador UUID opcional del activo en catálogo (`id_bien` referenciando a `Bienes`), la cardinalidad o identificador literal (`cantidad_o_id`), la clasificación contable (`naturaleza`: `'BMC'` para Bienes Muebles Capitalizables con número de inventario o `'BMNC'` para No Capitalizables), y la descripción literaria compuesta (`descripcion`).
 3. **`Folio_Salidas` (Tabla de Secuencia de Foliado):**
    Tabla transaccional atómica administrada directamente a nivel de sentencias SQL crudas en el QueryRunner. Almacena el historial secuencial de folios emitidos (`Folio` varchar), funcionando como un contador seguro a prueba de condiciones de carrera (Race Conditions).
-4. **Entidades Relacionadas (`Bien`, `Usuario`, `Unidad`):**
+4. **`SalidaBienAntiguo` (Tabla: `SalidaBienesAntiguo`):**
+   Entidad cabecera del archivo histórico de salidas. Almacena metadatos patrimoniales heredados (`ID`, `Responsable`, `M_Responsable`, `P_Responsable`, `Solicitante`, `M_Solicitante`, `P_Solicitante`, `Adscripcion`, `Procedencia`, `Para_Su`, `Unidad_Bien`, `Identificacion`, `Telefono`, `Estado_Fisico`, `Devolucion`, `Fecha_Devolucion`, `Area`, `Fecha`). Mantiene una relación 1:N de solo lectura con `ArticuloSalidaBienAntiguo`.
+5. **`ArticuloSalidaBienAntiguo` (Tabla: `ArticuloSalidaBienesAntiguo`):**
+   Entidad de detalle histórica asociada a las salidas antiguas mediante la llave foránea `IDArticulo`. Almacena las características de los activos trasladados en el sistema anterior (`Cantidad`, `Naturaleza`, `Descripcion`).
+6. **Entidades Relacionadas (`Bien`, `Usuario`, `Unidad`):**
    Entidades satélites que aportan la topología técnica del hardware (`modelo`, `num_serie`, `num_inv`), la ubicación geográfica e institucional territorial (`clave_zona`), y la autenticación institucional del personal que autoriza el movimiento.
 
 ### Reglas de Negocio
@@ -380,4 +390,60 @@ if (isEstandar(context) && context.user?.clave_zona) {
     { _sal_zona: context.user.clave_zona, _userId: context.user.id_usuario }
   );
 }
+```
+
+### Snippet 4 (Frontend & Backend): Consulta del Archivo Histórico de Salidas Antiguas y Paginación Anti-Saturación
+
+Muestra la integración entre el resolver de consulta histórica en TypeORM y la técnica de retención de datos en React Query v5 para evitar parpadeos o pantallas en blanco en transiciones rápidas de página:
+
+```typescript
+// Backend: src/graphql/resolvers/salidasAntiguas.resolver.ts
+salidasAntiguas: async (_: unknown, { filter, pagination }: any, context: GraphQLContext) => {
+  requireAuth(context);
+  const repo = AppDataSource.getRepository(SalidaBienAntiguo);
+  const qb = repo.createQueryBuilder('sa')
+    .leftJoinAndSelect('sa.articulos', 'art')
+    .orderBy('sa.id', 'DESC');
+
+  if (filter?.search) {
+    qb.andWhere(new Brackets(b => {
+      b.where('CAST(sa.id AS VARCHAR(50)) LIKE :search', { search: `%${filter.search}%` })
+       .orWhere('sa.solicitante LIKE :search', { search: `%${filter.search}%` })
+       .orWhere('sa.responsable LIKE :search', { search: `%${filter.search}%` })
+       .orWhere('art.descripcion LIKE :search', { search: `%${filter.search}%` });
+    }));
+  }
+
+  const first = pagination?.first ?? 20;
+  const offset = pagination?.page && pagination.page > 0 ? (pagination.page - 1) * first : 0;
+  qb.skip(offset).take(first);
+
+  const [salidas, totalCount] = await qb.getManyAndCount();
+  return {
+    edges: salidas.map((s) => ({ node: s, cursor: String(s.id) })),
+    pageInfo: { hasNextPage: offset + first < totalCount, totalCount },
+  };
+}
+```
+
+```javascript
+// Frontend: src/components/HistorialSalidasAntiguas.jsx
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
+
+const { data, isLoading, isFetching } = useQuery({
+  queryKey: ['salidasAntiguas', debouncedSearch, currentPage, startDate, endDate],
+  queryFn: () => gqlClient.request(GET_SALIDAS_ANTIGUAS, {
+    filter,
+    pagination: { first: PAGE_SIZE, page: currentPage }
+  }),
+  placeholderData: keepPreviousData, // Retiene la página anterior mientras carga la nueva
+});
+
+// En el renderizado de botones de paginación se bloquea el spam durante peticiones en vuelo:
+<button 
+  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))} 
+  disabled={currentPage === totalPages || isLoading || isFetching}
+>
+  Siguiente
+</button>
 ```
