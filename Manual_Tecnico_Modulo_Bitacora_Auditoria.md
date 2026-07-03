@@ -130,8 +130,8 @@ El corazón de la lógica reside en el suscriptor de eventos `src/subscribers/Bi
    El suscriptor no utiliza un repositorio nuevo o global; invoca explícitamente `await event.manager.save(Bitacora, bitacora)`. Esto garantiza que la inserción del log participe dentro de la **misma transacción SQL** del evento disparador. Si la mutación del activo falla o hace *Rollback*, el registro de auditoría también se revierte, manteniendo consistencia absoluta.
 4. **Filtros Anti-Spam y Mitigación de Ruido Operativo:**
    - **Exclusión de Tablas de Alta Frecuencia:** Omite automáticamente operaciones sobre `Notificaciones_Mensajes` y `Notificaciones_Lectura` para evitar inundar la bitácora con lecturas efímeras.
-   - **Supresión de Sincronizaciones Automáticas Windows (`WIN`):** Cuando los agentes de escritorio instalados en miles de PCs institucionales sincronizan masivamente inventarios locales de software e inventarios (`Programas_PC`, `Cuentas_PC`) con origen `'WIN'`, el suscriptor suprime la auditoría para preservar el almacenamiento y la limpieza del log.
-   - **Exclusión de Usuarios Auto-Sync en Login:** En `auth.resolver.ts`, si la cuenta que inicia sesión corresponde a la matrícula de sincronización desatendida (`process.env.AUTOSYNC_USER` o `'ti_autosync'`), se omite el evento `'LOGIN'`, auditando únicamente sus mutaciones reales sobre activos.
+   - **Supresión de Sincronizaciones Automáticas Windows (`WIN`):** Cuando los agentes de escritorio (SGHI) sincronizan masivamente inventarios con origen `'WIN'`, el suscriptor suprime el JSON detallado original. En su lugar, el sistema sobrescribe la acción y los detalles inyectando un mensaje unificado y limpio: `"AUTOSYNC ACTUALIZÓ UN EQUIPO"`, preservando el almacenamiento y la legibilidad de la bitácora.
+   - **Exclusión de Inicios de Sesión Auto-Sync:** En `auth.resolver.ts`, se omite por completo el evento `'LOGIN'` si se detecta que el origen de la transacción es la aplicación Windows (`WIN`) o si cuenta con información del equipo (`equipoInfo`), evitando llenar la bitácora con eventos de autenticación automatizados.
 
 ---
 
