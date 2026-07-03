@@ -35,26 +35,51 @@ graph TD
     F -->|Acción: Regenerar PDF| REG_PDF[Re-renderizado pdf-lib en el Navegador]
     F -->|Acción: Editar Salida| ED_MODAL[Modal Edición con SalidasForm embebido]
     ED_MODAL -->|Mutación| MUT_ACT[ACTUALIZAR_SALIDA]
+
+    %% Pestaña 3: Salidas Antiguas
+    D -->|Tab: SALIDAS ANTIGUAS| G[HistorialSalidasAntiguas.jsx - Consulta Histórica]
+    G -->|Consulta Acervo Previo| GET_ANT[GET_SALIDAS_ANTIGUAS]
+    G -->|Inspección Artículos| MOD_ART[Modal Detalle Artículos Salida]
+
+    %% Orquestación de Cabecera y Exportación Excel
+    A -->|Refrescar / Exportar a Excel via useRef + forwardRef| F
+    A -->|Refrescar / Exportar a Excel via useRef + forwardRef| G
+    F -->|Exportación Estructurada| EXP_XLSX[xlsx-js-style: Formateo Sí/No y Autofiltro]
+    G -->|Exportación Estructurada| EXP_XLSX_ANT[xlsx-js-style: Cabecera Folio y Autofiltro]
 ```
 
 ### Componentes Principales
 
-1. **`Movimientos.jsx` (Contenedor Principal Orquestador):**
-   Constituye el punto de entrada de la ruta `/movimientos`. Evalúa de manera reactiva la identidad del operador consultando `useAuthStore`. Si el usuario posee un rol estrictamente restringido (o se aplican políticas de solo lectura), renderiza un panel informativo de bloqueo institucional. En condiciones operativas normales, administra un enrutador de pestañas de **Radix UI** (`<Tabs.Root>`) que alterna de forma fluida entre el motor de creación (`SalidasForm`) y la bitácora histórica (`HistorialSalidas`).
+1. **`Movimientos.jsx` (Contenedor Principal Orquestador con Cabecera Dinámica):**
+   Constituye el punto de entrada de la ruta `/movimientos`. Evalúa de manera reactiva la identidad del operador consultando `useAuthStore`. Si el usuario posee un rol estrictamente restringido (o se aplican políticas de solo lectura), renderiza un panel informativo de bloqueo institucional. En condiciones operativas normales, administra un enrutador de pestañas de **Radix UI** (`<Tabs.Root>`) que alterna de forma fluida entre tres vistas: el motor de creación (`SalidasForm`), la bitácora histórica (`HistorialSalidas`) y la consulta del acervo antiguo (`HistorialSalidasAntiguas`).
+   - **Orquestación Reactiva de Botones de Cabecera:** Al navegar hacia las pestañas de consulta (`historial` o `historial_antiguo`), el contenedor renderiza dinámicamente en el extremo superior derecho de la cabecera los botones operativos de **Refrescar** (`RefreshCw`) y **Exportar a Excel** (`FileSpreadsheet`), manteniendo una coherencia visual estricta con el resto del sistema (botones con gradiente verde corporativo `#107c41`). Estos botones se vinculan de manera desacoplada y atómica a los métodos `refetch` y `handleExportExcel` expuestos por las sub-vistas mediante referencias (`useRef` y `forwardRef`).
 2. **`SalidasForm.jsx` (Motor Transaccional de Creación y Edición):**
    Es el componente más complejo del módulo. Opera de manera dual: como formulario de alta de nuevas salidas (`isEditMode = false`) y como sub-vista de modificación en caliente (`isEditMode = true`). Integra un sistema de tres etapas secuenciales:
    - *Etapa 1 (`formulario`):* Captura de metadatos institucionales (solicitante, matrícula, adscripción, empresa, identificación, motivo, origen, responsable, compromisos de devolución) y armado del carrito de bienes.
    - *Etapa 2 (`preview`):* Consulta el próximo folio a emitir (`GET_FOLIO_SALIDAS`) y renderiza en un `iframe` o visor nativo del navegador un archivo PDF oficial rellenado y sellado temporalmente en memoria del cliente.
    - *Etapa 3 (`confirmado`):* Tras la aprobación del usuario, ejecuta la mutación que consolida el folio atómicamente en el backend, habilita la impresión mediante combinaciones de teclas (`Ctrl+P` / `Cmd+P`) y bloquea la edición para evitar duplicidades transaccionales.
 3. **`HistorialSalidas.jsx` (Grilla de Auditoría, Inspección Interactiva y Control):**
-   Proporciona una vista de tabla paginada del histórico de pases de salida emitidos con funcionalidades avanzadas de inspección y búsqueda:
+   Proporciona una vista de tabla paginada del histórico de pases de salida emitidos con funcionalidades avanzadas de inspección y búsqueda. Envuelto en `forwardRef` y utilizando `useImperativeHandle`, expone de forma directa sus acciones de consulta y exportación hacia el orquestador principal:
    - **Búsqueda Multidimensional y Resaltado Visual (`HighlightText`):** Incorpora una barra de filtrado combinada (`search` con debounce de 400 ms) que busca coincidencias en folios, solicitantes, motivos, responsables, así como dentro de las descripciones, números de serie, números de inventario (`num_inv`) o cantidades de los bienes amparados. El componente helper `HighlightText` aplica un efecto de marcatextos amarillo brillante continuado sobre las coincidencias exactas en toda la pantalla sin alterar el flujo ni separar los caracteres de las palabras.
    - **Columna Enriquecida de Bienes (`BienesTableCell`):** En lugar de ocultar los datos de los activos, muestra en la celda un resumen visual con una insignia del conteo total (`<Package /> X bienes`) y viñetas con las dos primeras descripciones e identificadores directos del pase.
    - **Tablita Flotante Interactiva con Scroll en Hover:** Al posicionar el cursor sobre la celda o el botón de "+X más", se despliega en un portal flotante del DOM una mini-tabla interactiva (`pointer-events-auto`) con scroll interno. Cuenta con un sistema de temporizadores de gracia (`hoverTimer` y `closeTimer` de 250ms/350ms) que permite al usuario desplazar el mouse hacia dentro de la ventana emergente y hacer scroll tranquilamente sobre decenas de bienes sin que la tabla desaparezca o parpadee.
    - **Modal de Inspección Detallada:** Un clic sobre la celda abre un modal dedicado con la tabla completa de activos de esa salida, incorporando su propio buscador instantáneo con resaltado en tiempo real.
    - **Alineación Cronológica Estricta:** Implementa sincronización exacta de parámetros de fecha (`fecha_desde` y `fecha_hasta`) con las especificaciones del esquema GraphQL en el servidor.
-4. **Herramientas de Captura Ágil (`SearchableSelect` & Importadores Excel):**
+4. **`HistorialSalidasAntiguas.jsx` (Consulta del Acervo Histórico Previo):**
+   Sub-módulo especializado que expone la consulta paginada del histórico de pases de salida heredados o emitidos antes de la modernización arquitectónica (`GET_SALIDAS_ANTIGUAS`). Envuelto de manera homóloga en `forwardRef`, permite búsquedas por ID, solicitante, responsable o descripción, ofreciendo modales de inspección para los artículos asociados.
+5. **Herramientas de Captura Ágil (`SearchableSelect` & Importadores Excel):**
    El formulario incluye selectores auto-completados que consultan catálogos dinámicos (`useCatalogosBienes`). Para salidas masivas (ej. traslados de laboratorios completos), incorpora un importador y analizador sintáctico de archivos `.xlsx` (`handleImportExcel`) que extrae listas de números de serie, consulta su existencia en el inventario de la base de datos de forma paralela via `GET_BIEN_BY_SERIE_QUERY`, e inyecta los registros tipificados al listado de la salida. Además, incluye inteligencia topológica para acoplar opcionalmente los monitores vinculados a las CPU seleccionadas (`incluirMonitores`).
+
+### Exportación Estructurada y Normalización a Excel (`xlsx-js-style`)
+
+Las vistas de consulta de historial (`HistorialSalidas` y `HistorialSalidasAntiguas`) implementan un motor de generación de reportes tabulares en formato `.xlsx` de alta fidelidad visual y semántica, el cual opera bajo las siguientes normas técnicas:
+
+- **Cabecera Institucional Multi-renglón:** Todo reporte inicia desde la fila 1 con un bloque corporativo formal que incluye la institución (`SISTEMA INTEGRAL DE INFRAESTRUCTURA TECNOLOGICA — IMSS Delegación Nayarit`), el título del reporte, el rango de fechas o términos del filtrado activo (`Del dd/mm/aaaa al dd/mm/aaaa`), la fecha y hora de emisión del documento (`es-MX`) y el conteo total de registros exportados.
+- **Activación de Filtros Dinámicos Nativos (`!autofilter`):** El libro generado inyecta programáticamente la propiedad de autofiltro en el rango de cabeceras de la tabla (fila 6 en adelante), permitiendo al usuario final realizar selecciones múltiples y ordenamientos interactivos en Microsoft Excel sin necesidad de pre-configuración manual.
+- **Normalización Semántica de Datos:** Para evitar interpretaciones erróneas por parte de las hojas de cálculo:
+  - En la exportación de **Historial de Salidas**, la columna **Sujeto a Devolución** evalúa si el pase contempla compromiso de retorno y exporta canónicamente la cadena literaria **`"Sí"`** o **`"No"`**, suprimiendo la conversión automática a valores booleanos nativos de Excel (`VERDADERO` / `FALSO`).
+  - En la exportación de **Salidas Antiguas**, el identificador numérico primario adopta el título formal de **`Folio`** para mantener paridad semántica con el resto del ecosistema patrimonial.
+- **Consolidación Multi-línea de Activos:** La relación de bienes amparados por cada salida se procesa en un único bloque textual separado por saltos de línea (`\r\n`), garantizando que la celda contenga el listado completo y ordenado numerológicamente sin desbordar columnas horizontales.
 
 ### Motor de Exportación e Impresión PDF (`pdfSalidas.js`)
 
