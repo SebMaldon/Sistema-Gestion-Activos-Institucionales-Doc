@@ -73,9 +73,10 @@ El módulo integra una capacidad avanzada de exportación que genera hojas de c�
 
 - **Librería y Maquetación Visual:** Utiliza `xlsx-js-style` para construir un libro de trabajo (`workbook`) dotado de cabeceras institucionales en negrita (Filas 1 a 4 con el nombre del sistema, filtros aplicados, fecha de generación y conteo total), ajuste automático de salto de línea (`wrapText: true`), anchos de columna estrictamente calibrados (`wch`) y activación algorítmica de auto-filtros nativos de Excel a partir de la fila 6 (`worksheet['!autofilter'] = { ref: 'A6:...' }`).
 - **Nombramiento Dinámico del Archivo:** Genera identificadores semánticos que reflejan el contexto del reporte, por ejemplo: `Garantias_Filtradas_2026-06-29.xlsx` o `Reportes_Garantias_Completas_2026-06-29.xlsx`.
-- **Datos Exportados por Pestaña:**
-  - *En la pestaña `GARANTIAS`:* Exporta una matriz plana con las columnas: `ID Garantía`, `Equipo (Tipo)`, `Descripción Equipo` (Marca y Modelo), `Número de Serie`, `Proveedor`, `Estado Garantía` (Vigente/Vencida), `Inicio Garantía` y `Fin Garantía` (formateadas DD/MM/YYYY).
-  - *En la pestaña `REPORTES`:* Toma las garantías que cuentan con incidencias (`garantiasConReportes`) y genera una exportación profunda que incluye todas las columnas de identificación del equipo y póliza, incorporando de forma explícita la columna **`Último Estatus`** (`g.reportes[0].estatus`) y sumando la columna especializada **`Reportes / Bitácora`**. En esta columna, compila y formatea un historial secuencial detallado de cada ticket asociado, imprimiendo: número de reporte, tipo de dispositivo (resolviendo `tipoDispositivoObj?.nombre_tipo`), fecha del suceso, autor del registro con matrícula, estatus operativo, descripción completa de la falla, resolución técnica alcanzada, número de serie de pieza nueva y fecha de atención. Adicionalmente, si el usuario aplicó un filtro por último estatus en esta pestaña, el encabezado institucional en la fila 2 del Excel declara expresamente dicho filtro como `Estatus: [estatus seleccionados]`, manteniéndose consistente con los filtros aplicados en las demás vistas.
+- **Datos Exportados por Pestaña y Agrupación por Bitácoras:** Ambas pestañas generan filas independientes por cada bitácora o número de reporte (`No. Reporte`), separando las incidencias en filas individuales cuando una garantía tiene múltiples folios de reporte.
+  - *En la pestaña `GARANTIAS` (Control de Garantías):* Exporta una matriz con las columnas: `No. Reporte`, `Tipo de dispositivo(s)`, `Unidad`, `Usuario(s) que Reporta(n)`, `Descripción Equipo` (Marca y Modelo), `Número de Serie`, `Proveedor`, `Estado Garantía` (Vigente/Vencida), `Inicio Garantía` y `Fin Garantía`.
+  - *En la pestaña `REPORTES` (Reportes de Garantía):* Toma las garantías que cuentan con incidencias (`garantiasConReportes`) y genera una exportación profunda que incluye todas las columnas de identificación del equipo, póliza y unidad, incorporando de forma explícita las columnas **`Último Estatus`**, **`No. de Serie de Última Pieza Nueva`** y una nueva columna especializada para **`Fecha de Atención`**. Adicionalmente, suma la columna de historial **`Reportes / Bitácora`**. En esta columna, compila y formatea un historial secuencial detallado y limpio de cada ticket asociado sin separadores verticales (`|`) ni corchetes redundantes. Al contar ya con columnas propias para el número de reporte y la fecha de atención, estos datos se omiten del texto y cada nota se plasma en una maquetación ordenada de viñetas indentadas (`•`) para: fecha y estatus en cabecera, usuario que registró, usuario que reportó, equipo involucrado, pieza nueva, falla y resolución. Adicionalmente, si el usuario aplicó un filtro por último estatus en esta pestaña, el encabezado institucional en la fila 2 del Excel declara expresamente dicho filtro como `Estatus: [estatus seleccionados]`, manteniéndose consistente con los filtros aplicados en las demás vistas.
+- **Resolución Inteligente de Catálogos y Formateo en Viñetas (`formatLista`):** El motor se conecta dinámicamente al catálogo de tipos de dispositivo (`GET_MARCAS_TIPOS_QUERY`) y al catálogo de usuarios activos (`useUsuariosActivos`) para evitar que se exporten identificadores numéricos o matrículas aisladas. Mediante las funciones auxiliares `getNombreTipo` y `getNombreUsuarioReporta`, el sistema resuelve el nombre textual de cada dispositivo (ej. *Access Point, Micrófono*) y formatea a los usuarios reportantes incluyendo su matrícula entre paréntesis (ej. `ACOSTA RUBIO METZLI NAYELLI (98191375)`). Cuando una bitácora agrupa múltiples dispositivos o múltiples usuarios, la función `formatLista` los dispone como una lista vertical dentro de la celda de Excel usando viñetas (`•`) y saltos de línea (`\n`), aprovechando el auto-ajuste de texto (`wrapText: true`).
 
 ### Manejo de Estado y Hooks
 
@@ -488,4 +489,70 @@ const existingReportNumbers = useMemo(() => {
     placeholder="Ej. FOL-2026-001 o Ticket de Proveedor" />
 )}
 ```
+
+### Snippet 6 (Frontend): Formateo de Listas en Excel, Mapeo de Catálogos y Maquetación Limpia de Bitácora
+Muestra cómo la función de exportación a Excel en `Garantias.jsx` implementa resolutores de nombres para catálogos y usuarios (asegurando matrículas entre paréntesis), organiza múltiples elementos en viñetas verticales dentro de las celdas y estructura el texto de historial en la columna `Reportes / Bitácora` sin delimitadores redundantes.
+
+```javascript
+// Resolutor de nombre de equipo (evita exportar IDs numéricos)
+const getNombreTipo = (r) => {
+  if (r.tipoDispositivoObj?.nombre_tipo) return r.tipoDispositivoObj.nombre_tipo;
+  if (r.tipo_dispositivo) {
+    const match = tiposDispositivo.find(t => String(t.tipo_disp) === String(r.tipo_dispositivo) || t.nombre_tipo?.toLowerCase() === String(r.tipo_dispositivo).toLowerCase());
+    if (match?.nombre_tipo) return match.nombre_tipo;
+  }
+  return r.tipo_dispositivo || '';
+};
+
+// Resolutor de usuario que reporta con matrícula entre paréntesis
+const getNombreUsuarioReporta = (r) => {
+  if (r.usuarioReportaObj) {
+    const nom = r.usuarioReportaObj.nombre_completo || 'Usuario';
+    const mat = r.usuarioReportaObj.matricula || 'Sin matrícula';
+    return `${nom} (${mat})`;
+  }
+  if (r.usuario_reporta) {
+    const match = usuarios.find(u => String(u.id_usuario) === String(r.usuario_reporta) || String(u.matricula) === String(r.usuario_reporta) || u.nombre_completo?.toLowerCase() === String(r.usuario_reporta).toLowerCase());
+    if (match) {
+      const nom = match.nombre_completo || 'Usuario';
+      const mat = match.matricula || 'Sin matrícula';
+      return `${nom} (${mat})`;
+    }
+    return `${r.usuario_reporta} (Sin matrícula)`;
+  }
+  return '';
+};
+
+// Formateador de listas verticales para celdas Excel (saltos de línea y viñetas)
+const formatLista = (arr) => {
+  if (!arr || arr.length === 0) return 'N/A';
+  if (arr.length === 1) return arr[0];
+  return arr.map(item => `• ${item}`).join('\n');
+};
+
+// Maquetación limpia en viñetas para la columna 'Reportes / Bitácora'
+const reportesFormateados = group.reportes.length > 0
+  ? group.reportes.map((r, i) => {
+      let autor = 'Usuario desconocido';
+      if (r.usuarioRegistra) {
+        autor = `${r.usuarioRegistra.nombre_completo} (${r.usuarioRegistra.matricula || 'Sin matrícula'})`;
+      }
+      const tipoStr = getNombreTipo(r);
+      const reportoStr = getNombreUsuarioReporta(r);
+      
+      let lineas = [
+        `${i + 1}. [${r.fecha_reporte ? formatDate(r.fecha_reporte) : 'S/F'}] — Estatus: ${r.estatus || 'Sin Estatus'}`,
+        `   • Registró: ${autor}`
+      ];
+      if (reportoStr) lineas.push(`   • Reportó: ${reportoStr}`);
+      if (tipoStr) lineas.push(`   • Equipo: ${tipoStr}`);
+      if (r.serie_pieza_nueva) lineas.push(`   • Pieza Nueva: ${r.serie_pieza_nueva}`);
+      lineas.push(`   • Falla: ${r.descripcion_falla || 'Sin descripción'}`);
+      if (r.resolucion) lineas.push(`   • Resolución: ${r.resolucion}`);
+      
+      return lineas.join('\n');
+    }).join('\n\n')
+  : 'Sin Reportes';
+```
+
 
