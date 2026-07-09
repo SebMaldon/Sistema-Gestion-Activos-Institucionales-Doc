@@ -392,7 +392,7 @@ Ambas funciones propagan el error si la respuesta no es OK o si la red local fal
 
 ### 4.6 Comunicación con el Backend Central (`graphqlClient.js`)
 
-Módulo de 436 líneas que centraliza toda la comunicación GraphQL. La función base `queryGraphQL(query, variables)` agrega automáticamente:
+Módulo de 468 líneas que centraliza toda la comunicación GraphQL. La función base `queryGraphQL(query, variables)` agrega automáticamente:
 - Header `x-origen: win` en todas las peticiones.
 - Header `Authorization: Bearer {token}` tomado primero de `window.AUTO_SYNC_TOKEN` y luego de `localStorage.getItem('jwtToken')`.
 - En caso de error de autenticación (`UNAUTHENTICATED`, `auth`, `token` en el mensaje): limpia `localStorage`, redirige a `#/login` y recarga la página.
@@ -417,7 +417,8 @@ Módulo de 436 líneas que centraliza toda la comunicación GraphQL. La función
 | `getNotasBien(idBien)` | `query notasBien(id_bien)` | Lista de notas del bien con autor |
 | `createNotaBien(idBien, contenidoNota)` | `mutation createNotaBien(...)` | Crea nota técnica asociada al bien |
 | `getUserRole()` | — (decodifica JWT local) | Lee `id_rol` del payload del JWT sin consulta al servidor |
-| `checkIpUsage(ip, excludeIdBien)` | `query bienes(filter: { dir_ip })` | Verifica si una IP ya está en uso por otro bien (para alertar al técnico de conflictos de red) |
+| `checkIpUsage(ip, excludeIdBien)` | `query bienes(filter: { dir_ip })` | Verifica si una IP ya está en uso. Retorna `{ inUse: boolean, conflictos: [{ id_bien }] }` — el arreglo `conflictos` contiene los bienes que tienen esa IP asignada (excluyendo el bien actual) |
+| `liberarIpEquipo(idBien, ipToRemove)` | `query bien(...)` + `mutation upsertEspecificacionTI(...)` | Elimina una IP específica del campo `dir_ip` de otro bien (usado al reasignar una IP duplicada al bien actual); carga la spec TI del otro bien, filtra la IP y guarda con el mismo upsert |
 | `deleteCuentaPC(id_cuenta)` | `mutation deleteCuentaPC(...)` | Elimina cuenta individual de la PC |
 
 **Detalle de `saveAsset`:** Implementa la lógica completa de gestión de cuentas: elimina primero las cuentas que fueron desmarcadas (`!_selected && id_cuenta` existente), luego crea o actualiza las seleccionadas según si tienen `id_cuenta` y `!_new`. Los campos de programas usan una transformación de JSON para eliminar las comillas de los nombres de las claves: `.replace(/\"([a-zA-Z0-9_]+)\":/g, '$1:')` convirtiendo `{"programa":"..."}` a GraphQL Input Object `{programa:"..."}`.
@@ -544,9 +545,12 @@ El agente resuelve el `id_bien` correspondiente a la PC donde está instalado me
 1. **Archivo local `config.json`:** Si el técnico ya vinculó el equipo desde el frontend (via `POST /api/config`), el `id_bien` se persiste en `AppDomain.CurrentDomain.BaseDirectory\config.json`. En sincronizaciones futuras se usa este valor directamente, evitando una consulta de red adicional.
 2. **Búsqueda por número de serie:** Si no existe `config.json`, consulta al servidor filtrando bienes por el número de serie BIOS de la PC. Si el arreglo `edges` está vacío, la sincronización se cancela silenciosamente (el equipo no está registrado en el inventario — un técnico debe vincularlo primero desde el frontend).
 
-### 6.4 Verificación de IP en Uso (`checkIpUsage`)
+### 6.4 Verificación y Reasignación de IP en Uso (`checkIpUsage` + `liberarIpEquipo`)
 
-Antes de guardar una IP asignada manualmente por el técnico, el frontend consulta `query bienes(filter: { dir_ip })` para verificar si esa IP ya está asignada a otro bien. Si está en uso (excluyendo el bien actual), muestra una advertencia al técnico. La verificación parsea el campo `dir_ip` con `.split('/')` para soportar el formato de múltiples IPs separadas por `/`.
+Antes de guardar una IP asignada manualmente por el técnico, el frontend consulta `query bienes(filter: { dir_ip })` para verificar si esa IP ya está asignada a otro bien. Si está en uso, en lugar de solo mostrar un error bloqueante, el sistema presenta un diálogo de confirmación: *"Esta IP ya está registrada en otro activo. ¿Deseas asignarla a este equipo y dejar al otro sin IP?"*
+
+- Si el técnico confirma: se invoca `liberarIpEquipo(idBien, ip)` por cada bien en conflicto. Esta función carga las especificaciones TI del bien conflictivo, elimina la IP del campo `dir_ip` (soportando el formato de múltiples IPs separadas por `/`) y ejecuta `upsertEspecificacionTI` con el valor actualizado. Tras liberar, el guardado del bien actual continúa normalmente.
+- Si el técnico cancela: la operación se detiene, se muestra una alerta ("Operación cancelada. No se guardaron los cambios.") y el formulario queda editable para corregir la IP.
 
 ---
 
