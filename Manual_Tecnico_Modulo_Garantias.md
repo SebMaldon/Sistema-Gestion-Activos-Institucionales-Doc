@@ -10,7 +10,7 @@ En el contexto global del ecosistema institucional, este módulo actúa como un 
 
 ## 2. Arquitectura del Frontend
 
-La capa de presentación está desarrollada en **React (v18+)**, implementando un patrón de diseño modular basado en componentes orientados a eventos, estilización responsiva con utilidades **Tailwind CSS**, y sincronización de datos asíncrona altamente optimizada mediante **TanStack Query**.
+La capa de presentación está desarrollada en **React 19**, implementando un patrón de diseño modular basado en componentes orientados a eventos, estilización responsiva con utilidades **Tailwind CSS**, y sincronización de datos asíncrona altamente optimizada mediante **TanStack Query**.
 
 ```mermaid
 graph TD

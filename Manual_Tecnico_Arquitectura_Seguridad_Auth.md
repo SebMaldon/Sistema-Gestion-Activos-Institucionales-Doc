@@ -422,7 +422,7 @@ El SIIT tipifica la jerarquía institucional en 4 roles primarios que rigen tant
 
 ```text
 ROLES = {
-  MAESTRO: 1,      # Superadministrador TI delegacional (Acceso absoluto y auditoría profunda)
+  MAESTRO: 1,      # Maestro TI delegacional (Acceso absoluto y auditoría profunda)
   ADMIN: 2,        # Administrador patrimonial o jefe de zona (Acceso inter-zona o regional)
   USUARIO: 3,      # Personal técnico o capturista estándar (Estrictamente acotado a su Zona)
   SIN_ACCESO: 4    # Cuentas suspendidas o pendientes de asignación institucional

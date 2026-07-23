@@ -15,7 +15,7 @@ Dentro de la arquitectura global del sistema, este módulo opera como la fuente 
 
 ## 2. Arquitectura del Frontend
 
-La capa de presentación del módulo está desarrollada en **React (v18+)**, estructurada bajo un patrón arquitectónico de *Smart Components* y *Presenter Modals*, con diseño responsivo impulsado por tokens estilísticos de **Tailwind CSS** y optimización de renderizado intensivo para grandes volúmenes de datos tabulares.
+La capa de presentación del módulo está desarrollada en **React 19**, estructurada bajo un patrón arquitectónico de *Smart Components* y *Presenter Modals*, con diseño responsivo impulsado por tokens estilísticos de **Tailwind CSS** y optimización de renderizado intensivo para grandes volúmenes de datos tabulares.
 
 ### Diagrama de Jerarquía de Modales y Flujos de Control
 

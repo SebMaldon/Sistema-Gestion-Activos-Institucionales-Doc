@@ -14,7 +14,7 @@ En una infraestructura hospitalaria y administrativa que opera de manera continu
 
 ## 2. Arquitectura del Frontend
 
-La capa de presentación del módulo está construida utilizando **React (v18+)** con diseño funcional en **Tailwind CSS**, integrando gestión de estado global y persistencia local a través del **Contexto de Aplicación (`AppContext`)** y el store de autenticación (**Zustand (`useAuthStore`)**). La comunicación transaccional con el servidor para operaciones mutacionales se orquesta mediante **TanStack Query (v5)** y un cliente tipado **GraphQL Request**.
+La capa de presentación del módulo está construida utilizando **React 19** con diseño funcional en **Tailwind CSS**, integrando gestión de estado global y persistencia local a través del **Contexto de Aplicación (`AppContext`)** y el store de autenticación (**Zustand (`useAuthStore`)**). La comunicación transaccional con el servidor para operaciones mutacionales se orquesta mediante **TanStack Query (v5)** y un cliente tipado **GraphQL Request**.
 
 ```mermaid
 graph TD

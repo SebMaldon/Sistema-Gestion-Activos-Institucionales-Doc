@@ -16,7 +16,7 @@ En un ecosistema de alta criticidad paramédica y administrativa, la pérdida, m
 
 ## 2. Arquitectura del Frontend
 
-La capa de presentación del módulo está construida en **React (v18+)** con **Tailwind CSS**, operando bajo el paradigma de componentes funcionales puros. La orquestación del estado remoto, paginación, caché reactivo y políticas de auto-actualización se gestiona mediante **TanStack Query (v5)** comunicándose con el backend mediante **GraphQL Request**.
+La capa de presentación del módulo está construida en **React 19** con **Tailwind CSS**, operando bajo el paradigma de componentes funcionales puros. La orquestación del estado remoto, paginación, caché reactivo y políticas de auto-actualización se gestiona mediante **TanStack Query (v5)** comunicándose con el backend mediante **GraphQL Request**.
 
 ```mermaid
 graph TD
@@ -148,7 +148,7 @@ sequenceDiagram
     participant R as Resolver (Bienes/Usuarios)
     participant DB as SQL Server (TypeORM Transaction)
     participant S as BitacoraSubscriber (ORM Hook)
-    actor A as Supervisor (Rol 1 / 2)
+    actor A as Admin (Rol 1 / 2)
 
     Note over U, DB: Fase 1: Mutación Operativa Interceptada
     U->>F: Edita especificaciones o resguardo del Activo #1042

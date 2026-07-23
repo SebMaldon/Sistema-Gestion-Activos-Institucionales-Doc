@@ -10,7 +10,7 @@ En el contexto arquitectónico y de normatividad del ecosistema, este módulo re
 
 ## 2. Arquitectura del Frontend
 
-La capa de presentación del módulo está construida sobre **React (v18+)**, implementando una interfaz orientada a flujos transaccionales por etapas (`Formulario` $\rightarrow$ `Previsualización PDF` $\rightarrow$ `Confirmación Atómica`), estilización responsiva con **Tailwind CSS**, y una sincronización de datos con el servidor altamente optimizada mediante **TanStack Query (v5)**.
+La capa de presentación del módulo está construida sobre **React 19**, implementando una interfaz orientada a flujos transaccionales por etapas (`Formulario` $\rightarrow$ `Previsualización PDF` $\rightarrow$ `Confirmación Atómica`), estilización responsiva con **Tailwind CSS**, y una sincronización de datos con el servidor altamente optimizada mediante **TanStack Query (v5)**.
 
 ```mermaid
 graph TD

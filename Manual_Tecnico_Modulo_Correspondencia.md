@@ -15,7 +15,7 @@ En la arquitectura del sistema, la **Correspondencia (`MesaCorrespondencia`)** n
 
 ## 2. Arquitectura del Frontend
 
-La capa de presentación de este módulo está construida bajo **React (v18+)** con estilización responsiva en **Tailwind CSS**, orquestando la sincronización de datos y el estado asíncrono en memoria mediante **TanStack Query (v5)**.
+La capa de presentación de este módulo está construida bajo **React 19** con estilización responsiva en **Tailwind CSS**, orquestando la sincronización de datos y el estado asíncrono en memoria mediante **TanStack Query (v5)**.
 
 ```mermaid
 graph TD

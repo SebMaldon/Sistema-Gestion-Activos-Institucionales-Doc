@@ -14,7 +14,7 @@ Dentro de la arquitectura global del sistema, el Dashboard actúa como el orques
 
 ## 2. Arquitectura del Frontend
 
-La capa de presentación está implementada en **React (v18+)** utilizando un enfoque de componentes modulares, diseño responsivo impulsado por **Vanilla CSS / Tailwind CSS tokens** y visualización de datos vectoriales altamente optimizada mediante **Recharts**.
+La capa de presentación está implementada en **React 19** utilizando un enfoque de componentes modulares, diseño responsivo impulsado por **Vanilla CSS / Tailwind CSS tokens** y visualización de datos vectoriales altamente optimizada mediante **Recharts**.
 
 ```mermaid
 graph TD

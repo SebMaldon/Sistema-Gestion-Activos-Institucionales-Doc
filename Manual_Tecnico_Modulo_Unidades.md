@@ -14,7 +14,7 @@ En la arquitectura general del sistema, la **Unidad Física** funciona como la e
 
 ## 2. Arquitectura del Frontend
 
-La capa de presentación del módulo está desarrollada en **React (v18+)** bajo una arquitectura modular y transaccional orientada a vistas altamente interactivas, estilización responsiva con **Tailwind CSS**, y gestión de estado asíncrono y caché en memoria propulsada por **TanStack Query (v5)**.
+La capa de presentación del módulo está desarrollada en **React 19** bajo una arquitectura modular y transaccional orientada a vistas altamente interactivas, estilización responsiva con **Tailwind CSS**, y gestión de estado asíncrono y caché en memoria propulsada por **TanStack Query (v5)**.
 
 ```mermaid
 graph TD

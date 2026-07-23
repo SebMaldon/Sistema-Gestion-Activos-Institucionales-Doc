@@ -13,7 +13,7 @@ En un entorno hospitalario y administrativo altamente crítico, la integridad de
 
 ## 2. Arquitectura del Frontend
 
-La capa de presentación para el módulo de aprobaciones está construida en **React (v18+)** utilizando **Tailwind CSS** para una estilización limpia y responsiva, apoyándose en **TanStack Query (v5)** para la sincronización reactiva de catálogos e interactuando con el backend mediante un cliente ligero GraphQL (`graphql-request`).
+La capa de presentación para el módulo de aprobaciones está construida en **React 19** utilizando **Tailwind CSS** para una estilización limpia y responsiva, apoyándose en **TanStack Query (v5)** para la sincronización reactiva de catálogos e interactuando con el backend mediante un cliente ligero GraphQL (`graphql-request`).
 
 ```mermaid
 graph TD

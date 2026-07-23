@@ -17,7 +17,7 @@ En una infraestructura que gestiona miles de activos tecnológicos hospitalarios
 
 ## 2. Arquitectura del Frontend
 
-La capa de presentación del módulo está construida en **React (v18+)** con **Tailwind CSS**, orquestando la interactividad y caché reactivo del cliente mediante **TanStack Query (v5)** y comunicándose vía contrato tipado con **GraphQL Request**.
+La capa de presentación del módulo está construida en **React 19** con **Tailwind CSS**, orquestando la interactividad y caché reactivo del cliente mediante **TanStack Query (v5)** y comunicándose vía contrato tipado con **GraphQL Request**.
 
 ```mermaid
 graph TD

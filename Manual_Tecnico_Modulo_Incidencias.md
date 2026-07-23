@@ -14,7 +14,7 @@ Dentro de la arquitectura global del ecosistema, este módulo desempeña funcion
 
 ## 2. Arquitectura del Frontend
 
-La capa de presentación está implementada en **React (v18+)** bajo una arquitectura orientada a componentes funcionales puros, optimizada para alta densidad de datos mediante visualización tipo **Kanban** y **Lista Histórica**, gestionada globalmente con **TanStack Query (v5)** y estilizada en **Vanilla CSS / Tailwind CSS tokens**.
+La capa de presentación está implementada en **React 19** bajo una arquitectura orientada a componentes funcionales puros, optimizada para alta densidad de datos mediante visualización tipo **Kanban** y **Lista Histórica**, gestionada globalmente con **TanStack Query (v5)** y estilizada en **Vanilla CSS / Tailwind CSS tokens**.
 
 ```mermaid
 graph TD
@@ -56,7 +56,7 @@ El módulo combina patrones de gestión de estado local, referencias de ciclo de
   - `useMemo`: Ejecuta el filtrado compuesto del Kanban de manera síncrona. Evalúa coincidencias por número de serie, descripción de equipo, falla, alias, requerimiento y usuario generador, agrupándolas en sus respectivas columnas y calculando la ventana temporal actual para los cierres semanales.
   - `useRef` & `useEffect`: Implementan el patrón *Outside Click Detector* en `IncidenciaCard` para cerrar menús contextuales flotantes al hacer clic fuera de la tarjeta, verificando escrupulosamente el DOM para ignorar clics originados en capas modales globales (`.z-50`).
 - **Estado Global y RBAC (`useAuthStore`):**
-  - Extracto del almacén global en Zustand que provee el nivel de acceso: **Maestro** (`id_rol === 1`: permisos totales de creación, edición y eliminación de registros/notas) y **Admin/Supervisor** (`id_rol === 2`: permisos de creación, edición y seguimiento técnico).
+  - Extracto del almacén global en Zustand que provee el nivel de acceso: **Maestro** (`id_rol === 1`: permisos totales de creación, edición y eliminación de registros/notas) y **Admin** (`id_rol === 2`: permisos de creación, edición y seguimiento técnico).
 - **Caché y Sincronización Remota (`@tanstack/react-query` & `useIncidencias.js`):**
   - **`useIncidencias`:** Orquesta la petición de obtención general mediante `GET_INCIDENCIAS_QUERY`. Configurado con un `staleTime: 45_000` (45 segundos) y `refetchOnWindowFocus: false`, equilibrando la frescura de los datos operativos con el ahorro de recursos del servidor. Intercepta errores GraphQL; ante un código `UNAUTHENTICATED`, invoca automáticamente `clearAuth()` para purgar la sesión vencida.
   - **Hooks de Mutación Transaccional:** `useUpdateEstatusIncidencia`, `usePasarAEnProceso`, `useResolverIncidencia`, `useAgregarNota`, `useDeleteIncidencia` y `useDeleteNota`. Todos implementan invalidación programática de caché (`queryClient.invalidateQueries({ queryKey: ['incidencias'] })`), garantizando que la interfaz refleje transiciones de estado al instante sin recargar la página.

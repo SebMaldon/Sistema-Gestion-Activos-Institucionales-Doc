@@ -14,7 +14,7 @@ En la arquitectura del ecosistema institucional, el **Escáner QR** opera bajo u
 
 ## 2. Arquitectura del Frontend
 
-La capa de presentación del módulo está desarrollada en **React (v18+)** bajo un patrón de diseño responsivo de doble columna optimizado tanto para resoluciones de escritorio del personal de mesa de ayuda como para terminales móviles y tabletas de auditores en campo. Utiliza **Tailwind CSS** con animaciones por hardware (`keyframes scanGlow`) y gestión de estado asíncrono propulsada por **TanStack Query (v5)**.
+La capa de presentación del módulo está desarrollada en **React 19** bajo un patrón de diseño responsivo de doble columna optimizado tanto para resoluciones de escritorio del personal de mesa de ayuda como para terminales móviles y tabletas de auditores en campo. Utiliza **Tailwind CSS** con animaciones por hardware (`keyframes scanGlow`) y gestión de estado asíncrono propulsada por **TanStack Query (v5)**.
 
 ```mermaid
 graph TD
